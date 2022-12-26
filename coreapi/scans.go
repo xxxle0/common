@@ -2,29 +2,34 @@ package coreapi
 
 import (
 	"bytes"
-	"common/coreapi/model"
 	"encoding/json"
 	"fmt"
 	"net/http"
 )
 
-type ScanAPI struct {
+type ScanAPI[R any] struct {
 	baseURL string
 	v2      string
 }
 
-type IScanAPI interface{}
+type IScanAPI[R any] interface {
+	GetScansOfRepository(repositoryId int) ([]R, error)
+	GetScans(repositoryId int, createdAt string) ([]R, error)
+	GetScanByIds(scanIds []string) ([]R, error)
+	InsertScans(scans []R) ([]R, error)
+	GetScanById(scanId string) (*R, error)
+}
 
-func NewScanAPI(baseURL string) IScanAPI {
+func NewScanAPI[R any](baseURL string) IScanAPI[R] {
 	v2 := fmt.Sprintf("%s/v2/scans", baseURL)
-	return ScanAPI{
+	return ScanAPI[R]{
 		baseURL: baseURL,
 		v2:      v2,
 	}
 }
 
-func (s ScanAPI) GetScansOfRepository(repositoryId int) ([]model.Scan, error) {
-	var scans []model.Scan
+func (s ScanAPI[R]) GetScansOfRepository(repositoryId int) ([]R, error) {
+	var scans []R
 	url := fmt.Sprintf("%s/getScansOfRepository", s.v2)
 	body := map[string]int{
 		"repositoryId": repositoryId,
@@ -51,7 +56,7 @@ func (s ScanAPI) GetScansOfRepository(repositoryId int) ([]model.Scan, error) {
 	return scans, nil
 }
 
-func (s ScanAPI) GetScans(repositoryId int, createdAt string) ([]model.Scan, error) {
+func (s ScanAPI[R]) GetScans(repositoryId int, createdAt string) ([]R, error) {
 	url := fmt.Sprintf("%s/getScans", s.v2)
 	requestBody := map[string]interface{}{
 		"repositoryId": repositoryId,
@@ -72,7 +77,7 @@ func (s ScanAPI) GetScans(repositoryId int, createdAt string) ([]model.Scan, err
 		return nil, err
 	}
 	defer res.Body.Close()
-	var scans []model.Scan
+	var scans []R
 	err = json.NewDecoder(res.Body).Decode(&scans)
 	if err != nil {
 		return nil, err
@@ -80,7 +85,7 @@ func (s ScanAPI) GetScans(repositoryId int, createdAt string) ([]model.Scan, err
 	return scans, nil
 }
 
-func (s ScanAPI) InsertScans(scans []model.Scan) ([]model.Scan, error) {
+func (s ScanAPI[R]) InsertScans(scans []R) ([]R, error) {
 	url := fmt.Sprintf("%s/insertScans", s.v2)
 	requestBody := map[string]interface{}{
 		"scans": scans,
@@ -100,7 +105,7 @@ func (s ScanAPI) InsertScans(scans []model.Scan) ([]model.Scan, error) {
 		return nil, err
 	}
 	defer res.Body.Close()
-	var insertedScans []model.Scan
+	var insertedScans []R
 	err = json.NewDecoder(res.Body).Decode(&insertedScans)
 	if err != nil {
 		return nil, err
@@ -108,7 +113,7 @@ func (s ScanAPI) InsertScans(scans []model.Scan) ([]model.Scan, error) {
 	return insertedScans, nil
 }
 
-func (s ScanAPI) GetScanById(scanId string) (*model.Scan, error) {
+func (s ScanAPI[R]) GetScanById(scanId string) (*R, error) {
 	url := fmt.Sprintf("%s/getScanById", s.v2)
 	requestBody := map[string]interface{}{
 		"scanId": scanId,
@@ -128,7 +133,7 @@ func (s ScanAPI) GetScanById(scanId string) (*model.Scan, error) {
 		return nil, err
 	}
 	defer res.Body.Close()
-	var scan model.Scan
+	var scan R
 	err = json.NewDecoder(res.Body).Decode(&scan)
 	if err != nil {
 		return nil, err
@@ -136,7 +141,7 @@ func (s ScanAPI) GetScanById(scanId string) (*model.Scan, error) {
 	return &scan, nil
 }
 
-func (s ScanAPI) GetScanByIds(scanIds []string) ([]model.Scan, error) {
+func (s ScanAPI[R]) GetScanByIds(scanIds []string) ([]R, error) {
 	url := fmt.Sprintf("%s/getScanById", s.v2)
 	requestBody := map[string]interface{}{
 		"scanIds": scanIds,
@@ -156,7 +161,7 @@ func (s ScanAPI) GetScanByIds(scanIds []string) ([]model.Scan, error) {
 		return nil, err
 	}
 	defer res.Body.Close()
-	var scans []model.Scan
+	var scans []R
 	err = json.NewDecoder(res.Body).Decode(&scans)
 	if err != nil {
 		return nil, err
